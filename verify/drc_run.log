@@ -1,0 +1,9 @@
+### 1. Magic DRC (magic -> stdout)
+Total DRC errors found: 0
+TOTAL DRC ERROR COUNT: 0
+
+### 2. KLayout sign-off DRC (sky130A_mr.drc -> verify/bomu_drc.lyrdb)
+
+### KLayout DRC verdict:
+CLEAN -- 0 violations
+Report -> verify/bomu_drc.lyrdb
