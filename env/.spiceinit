@@ -1,0 +1,5 @@
+* Project ngspice init — RGC-CD TIA
+* hsa = HSPICE-compatible behavior, required by the sky130 device models.
+set ngbehavior=hsa
+set ng_nomodcheck
+set num_threads=6

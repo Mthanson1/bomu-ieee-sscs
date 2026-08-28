@@ -1,0 +1,3 @@
+# Project magicrc — RGC-CD TIA (sky130A)
+# Loads the sky130A magic tech (DRC, extraction, ext2spice for PEX).
+source $env(PDK_ROOT)/sky130A/libs.tech/magic/sky130A.magicrc

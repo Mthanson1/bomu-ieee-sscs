@@ -1,0 +1,3 @@
+[submodule "extern/sky130A-gmid"]
+	path = extern/sky130A-gmid
+	url = https://github.com/Mthanson1/sky130A-gmid.git

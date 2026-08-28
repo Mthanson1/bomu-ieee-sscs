@@ -1,0 +1,13 @@
+artifacts/*
+!artifacts/.gitkeep
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Magic backups
+*.mag.bak
+
+# Layout extraction intermediates
+layout/*.ext
+layout/*.res.ext
