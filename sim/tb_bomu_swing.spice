@@ -1,0 +1,60 @@
+** sch_path: /foss/designs/BoMu-tt-sky130a/ip/tb_bomu_swing.sch
+**.subckt tb_bomu_swing
+x1 net1 net2 voutp voutn VDD 0 bomu
+V1 VDD 0 1.2
+R1 net4 net1 100
+R2 net3 net2 100
+Vdp net4 net5 dc 0 sin(0 {Va} {F})
+Vdn net3 net5 dc 0 sin(0 {-Va} {F})
+Vcm net5 0 {VSC}
+C1 voutp 0 5p
+C2 voutn 0 5p
+**** begin user architecture code
+
+
+.lib $PDK_ROOT/sky130A/libs.tech/ngspice/sky130.lib.spice tt
+.param VSC=1.052
+.param Va=23.7m
+.param F=1meg
+.control
+tran 0.5n 3u
+let vod = v(voutp)-v(voutn)
+meas tran vodmax MAX vod from=1u to=3u
+meas tran vodmin MIN vod from=1u to=3u
+let vodpp = vodmax-vodmin
+print vodpp
+* linearity: harmonic distortion of differential output
+fourier 1meg vod
+* clipping/compliance sanity: single-ended nodes vs rails
+meas tran vopmax MAX v(voutp) from=1u to=3u
+meas tran vopmin MIN v(voutp) from=1u to=3u
+print vopmax vopmin
+.endc
+
+**** end user architecture code
+**.ends
+
+* expanding   symbol:  bomu.sym # of pins=6
+** sym_path: /foss/designs/BoMu-tt-sky130a/ip/bomu.sym
+** sch_path: /foss/designs/BoMu-tt-sky130a/ip/bomu.sch
+.subckt bomu vinp vinn voutp voutn VDD VSS
+*.ipin vinp
+*.ipin vinn
+*.opin voutn
+*.opin voutp
+*.iopin VDD
+*.iopin VSS
+XRD1 voutn VDD VSS sky130_fd_pr__res_high_po_5p73 L=2.21 mult=1
+XRD2 voutp VDD VSS sky130_fd_pr__res_high_po_5p73 L=2.21 mult=1
+XM1 voutn vinp vtail VSS sky130_fd_pr__nfet_01v8_lvt L=0.15 W=320 nf=32 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=1
+XM2 voutp vinn vtail VSS sky130_fd_pr__nfet_01v8_lvt L=0.15 W=320 nf=32 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=1
+XRref nbias VDD VSS sky130_fd_pr__res_high_po_2p85 L=1.74 mult=1
+XM3 vtail nbias VSS VSS sky130_fd_pr__nfet_01v8 L=0.5 W=80 nf=8 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=1
+XM4 nbias nbias VSS VSS sky130_fd_pr__nfet_01v8 L=0.5 W=10 nf=1 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=1
+XRdum1 VSS VSS VSS sky130_fd_pr__res_high_po_5p73 L=2.21 mult=1
+XRdum2 VSS VSS VSS sky130_fd_pr__res_high_po_5p73 L=2.21 mult=1
+XMdum VSS VSS VSS VSS sky130_fd_pr__nfet_01v8_lvt L=0.15 W=10 nf=1 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=4 m=4
+.ends
+
+.GLOBAL VDD
+.end

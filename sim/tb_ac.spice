@@ -1,0 +1,90 @@
+* BoMu: resistively-loaded NMOS source-coupled pair, differential AC response.
+* M1/M2 matched pair, shared tail sink 2*ID, each drain pulled to VDD=1.2V by
+* R_D. Output taken differentially: v_od = v(voutp,voutn).
+*
+* Fixed by the environment (not design choices):
+*   C_L   = 5 pF  per output node   (TinyTapeout IO pad capacitance)
+*   VDD   = 1.2 V
+* The tail sink is now on-chip (simple resistor-programmed mirror), and VSC is
+* raised to lift v(vtail) to ~0.33 V so the mirror sits in clean saturation.
+*
+* First-cut design targets:  BW = 150 MHz, A_v0 = 10 dB, v_od = 400 mVpp, L=0.15um
+*   R_D  = 1/(2*pi*BW*C_L) = 1/(2*pi*150e6*5e-12) = 212 ohm      <- from BW
+*   gm   = A_v0/R_D        = 3.162/212            = 14.9 mS      <- from gain
+*   gm/Id (chosen)         = 15  (moderate inversion)
+*   ID   = gm/(gm/Id)      = 0.99 mA  ~= 1 mA   ->  I_tail = 2*ID = 2 mA
+*
+* The ideal-gain result uses R_D||ro; with L=0.15um ro is finite, so measured A0
+* reads a little under 10 dB and f3dB a little over 150 MHz. The tail sink fixes
+* ID; device W is the knob that sets gm/Id to land gm=14.9mS, which the gm/Id
+* lookup (ported from mvm-tia-comp) solves.
+.lib $PDK_ROOT/sky130A/libs.tech/ngspice/sky130.lib.spice tt
+
+.param VDD=1.2
+.param ID=1.1413m       ; per-branch target current -> tail = 2*ID = 2.28 mA (gm~17.1 mS); now set by the on-chip mirror
+.param VSC=1.052        ; input common-mode raised 0.92->1.052 to lift v(vtail) to ~0.33 V (clean mirror saturation)
+
+* device under test: the source-coupled pair + load resistors.
+* Ports:  vinp vinn voutp voutn vdd vss vtail
+* Sign convention: M1 gate=vinp -> drain=voutn ; M2 gate=vinn -> drain=voutp,
+* so v_od = v(voutp,voutn) has positive gain vs v_id = vinp-vinn.
+* Device sizes are subckt params (not global .param) so they evaluate in this
+* scope when passed into the nested nfet subckt; non-reserved names avoid the
+* ngspice 'ln'/'nf' collisions. WD is a placeholder set by the gm/Id lookup.
+* Operating point that meets both specs (10 dB, 150 MHz): gm~17.1 mS -> WD=78,
+* with RD=245 ohm re-centring the gain/BW pair (the +7% gm over the 16 mS point
+* buys BW headroom for layout parasitics).
+.subckt bomu vinp vinn voutp voutn vdd vss
++ WD=78 LCH=0.15 NFIN=8 RD=245 WOUT=80 WREF=10 LM=0.5 NM=8 RREF=745
+XM1 voutn vinp vtail vss sky130_fd_pr__nfet_01v8_lvt L={LCH} W={WD} nf={NFIN}
+XM2 voutp vinn vtail vss sky130_fd_pr__nfet_01v8_lvt L={LCH} W={WD} nf={NFIN}
+RD1 vdd voutn {RD}
+RD2 vdd voutp {RD}
+* on-chip tail current mirror (simple, resistor-programmed); vtail internal.
+* Mout (M3) sinks 2*ID; Mref (M4) is the diode-connected reference, ratio N=8.
+* Std-VT nfet_01v8 at L=0.5 (long channel is free: differentially the tail is a
+* virtual ground). RREF is ideal here; the schematic uses res_high_po_2p85 L~6.62.
+Rref vdd nbias {RREF}
+XM4  nbias nbias vss vss sky130_fd_pr__nfet_01v8 L={LM} W={WREF} nf=1
+XM3  vtail nbias vss vss sky130_fd_pr__nfet_01v8 L={LM} W={WOUT} nf={NM}
+.ends bomu
+
+* supplies
+Vdd  vdd 0 {VDD}
+Vsc  vcm 0 dc {VSC}
+
+* floating differential drive (+/- v_sd/2) riding on V_SC
+* AC amplitude 0.5 each -> differential input = 1.0, so |v_od| is the gain in V/V.
+Vdp  gp vcm dc 0 ac  0.5
+Vdn  gn vcm dc 0 ac -0.5
+* 100 ohm series source resistance into each gate.
+Rsp  gp vinp 100
+Rsn  gn vinn 100
+
+* DUT + environment
+Xdut  vinp vinn voutp voutn vdd 0 bomu   ; vtail is internal to the DUT (on-chip mirror)
+CLp   voutp 0 5p                ; TinyTapeout pad cap, fixed
+CLn   voutn 0 5p
+
+.control
+ac dec 100 1k 10G
+* differential output in dB (db() = 20*log10|.|); two-node vdb() is unreliable
+* inside meas, so build the vector explicitly.
+let vod    = v(voutp) - v(voutn)
+let vod_db = db(vod)
+meas ac a0_db find vod_db at=1k
+let  targ  = a0_db - 3
+meas ac f3db when vod_db=targ fall=1
+
+echo "differential DC gain A_v0 (dB):"
+print a0_db
+echo "-3 dB bandwidth (Hz):"
+print f3db
+wrdata ../artifacts/bomu_ac.dat vod_db
+
+* DC operating-point sanity (want vds in saturation, vtail > 0.2 V budget)
+op
+echo "bias check:"
+print v(xdut.vtail) v(voutp) v(voutn)
+.endc
+.end
