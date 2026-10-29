@@ -4,8 +4,8 @@ x1 net1 net2 voutp voutn VDD 0 bomu
 V1 VDD 0 1.2
 R1 net4 net1 100
 R2 net3 net2 100
-Vdp net4 net5 dc 0 sin(0 {Va} {F})
-Vdn net3 net5 dc 0 sin(0 {-Va} {F})
+Vdp net4 net5 dc 0 ac 0.5 sin(0 {Va} {F})
+Vdn net3 net5 dc 0 ac -0.5 sin(0 {-Va} {F})
 Vcm net5 0 {VSC}
 C1 voutp 0 5p
 C2 voutn 0 5p
@@ -14,7 +14,7 @@ C2 voutn 0 5p
 
 .lib $PDK_ROOT/sky130A/libs.tech/ngspice/sky130.lib.spice tt
 .param VSC=1.052
-.param Va=23.7m
+.param Va=32m
 .param F=1meg
 .control
 tran 0.5n 3u
@@ -29,12 +29,24 @@ fourier 1meg vod
 meas tran vopmax MAX v(voutp) from=1u to=3u
 meas tran vopmin MIN v(voutp) from=1u to=3u
 print vopmax vopmin
+* total simulated supply power (averaged over the settled window)
+let isup = abs(i(v1))
+meas tran iavg AVG isup from=1u to=3u
+let pavg_mw = 1.2*iavg*1e3
+print iavg pavg_mw
+* small-signal differential gain + bandwidth
+ac dec 100 1k 10G
+let avdb = vdb(voutp,voutn)
+meas ac av0_db FIND avdb AT=1k
+let gmarg = avdb-(av0_db-3)
+meas ac f3db WHEN gmarg=0 FALL=1
+print av0_db f3db
 .endc
 
 **** end user architecture code
 **.ends
 
-* expanding   symbol:  bomu.sym # of pins=6
+* expanding   symbol:  /foss/designs/BoMu-tt-sky130a/ip/bomu.sym # of pins=6
 ** sym_path: /foss/designs/BoMu-tt-sky130a/ip/bomu.sym
 ** sch_path: /foss/designs/BoMu-tt-sky130a/ip/bomu.sch
 .subckt bomu vinp vinn voutp voutn VDD VSS
@@ -44,15 +56,15 @@ print vopmax vopmin
 *.opin voutp
 *.iopin VDD
 *.iopin VSS
-XRD1 voutn VDD VSS sky130_fd_pr__res_high_po_5p73 L=2.21 mult=1
-XRD2 voutp VDD VSS sky130_fd_pr__res_high_po_5p73 L=2.21 mult=1
-XM1 voutn vinp vtail VSS sky130_fd_pr__nfet_01v8_lvt L=0.15 W=320 nf=32 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=1
-XM2 voutp vinn vtail VSS sky130_fd_pr__nfet_01v8_lvt L=0.15 W=320 nf=32 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=1
-XRref nbias VDD VSS sky130_fd_pr__res_high_po_2p85 L=1.74 mult=1
+XRD1 voutn VDD VSS sky130_fd_pr__res_high_po_5p73 L=3.1 mult=1
+XRD2 voutp VDD VSS sky130_fd_pr__res_high_po_5p73 L=3.1 mult=1
+XM1 voutn vinp vtail VSS sky130_fd_pr__nfet_01v8_lvt L=0.15 W=80 nf=8 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=1
+XM2 voutp vinn vtail VSS sky130_fd_pr__nfet_01v8_lvt L=0.15 W=80 nf=8 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=1
+XRref nbias VDD VSS sky130_fd_pr__res_high_po_2p85 L=5.41 mult=1
 XM3 vtail nbias VSS VSS sky130_fd_pr__nfet_01v8 L=0.5 W=80 nf=8 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=1
 XM4 nbias nbias VSS VSS sky130_fd_pr__nfet_01v8 L=0.5 W=10 nf=1 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=1
-XRdum1 VSS VSS VSS sky130_fd_pr__res_high_po_5p73 L=2.21 mult=1
-XRdum2 VSS VSS VSS sky130_fd_pr__res_high_po_5p73 L=2.21 mult=1
+XRdum1 VSS VSS VSS sky130_fd_pr__res_high_po_5p73 L=3.1 mult=1
+XRdum2 VSS VSS VSS sky130_fd_pr__res_high_po_5p73 L=3.1 mult=1
 XMdum VSS VSS VSS VSS sky130_fd_pr__nfet_01v8_lvt L=0.15 W=10 nf=1 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=4 m=4
 .ends
 

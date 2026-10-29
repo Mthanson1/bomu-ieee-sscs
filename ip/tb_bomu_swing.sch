@@ -37,8 +37,8 @@ value=100
 footprint=1206
 device=resistor
 m=1}
-C {vsource.sym} 360 1240 1 0 {name=Vdp value="dc 0 sin(0 \\\{Va\\\} \\\{F\\\})" savecurrent=false}
-C {vsource.sym} 360 1300 1 0 {name=Vdn value="dc 0 sin(0 \\\{-Va\\\} \\\{F\\\})" savecurrent=false}
+C {vsource.sym} 360 1240 1 0 {name=Vdp value="dc 0 ac 0.5 sin(0 \\\{Va\\\} \\\{F\\\})" savecurrent=false}
+C {vsource.sym} 360 1300 1 0 {name=Vdn value="dc 0 ac -0.5 sin(0 \\\{-Va\\\} \\\{F\\\})" savecurrent=false}
 C {vsource.sym} 280 1350 0 0 {name=Vcm value=\{VSC\} savecurrent=false}
 C {gnd.sym} 280 1380 0 0 {name=l5 lab=0}
 C {code_shown.sym} 140 1460 0 0 {name=s1 
@@ -61,6 +61,18 @@ fourier 1meg vod
 meas tran vopmax MAX v(voutp) from=1u to=3u
 meas tran vopmin MIN v(voutp) from=1u to=3u
 print vopmax vopmin
+* total simulated supply power (averaged over the settled window)
+let isup = abs(i(v1))
+meas tran iavg AVG isup from=1u to=3u
+let pavg_mw = 1.2*iavg*1e3
+print iavg pavg_mw
+* small-signal differential gain + bandwidth
+ac dec 100 1k 10G
+let avdb = vdb(voutp,voutn)
+meas ac av0_db FIND avdb AT=1k
+let gmarg = avdb-(av0_db-3)
+meas ac f3db WHEN gmarg=0 FALL=1
+print av0_db f3db
 .endc"
 }
 C {lab_pin.sym} 720 1260 0 1 {name=p1 sig_type=std_logic lab=voutp}
