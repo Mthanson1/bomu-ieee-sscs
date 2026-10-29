@@ -1,20 +1,20 @@
 ** sch_path: /foss/designs/BoMu-tt-sky130a/ip/bomu.sch
-.subckt bomu vinp vinn voutn voutp VDD VSS
+.subckt bomu vinp vinn voutp voutn VDD VSS
 *.ipin vinp
 *.ipin vinn
 *.opin voutn
 *.opin voutp
 *.iopin VDD
 *.iopin VSS
-XRD1 voutn VDD VSS sky130_fd_pr__res_high_po_5p73 L=2.21 mult=1
-XRD2 voutp VDD VSS sky130_fd_pr__res_high_po_5p73 L=2.21 mult=1
-XM1 voutn vinp vtail VSS sky130_fd_pr__nfet_01v8_lvt L=0.15 W=320 nf=32 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=1
-XM2 voutp vinn vtail VSS sky130_fd_pr__nfet_01v8_lvt L=0.15 W=320 nf=32 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=1
-XRref nbias VDD VSS sky130_fd_pr__res_high_po_2p85 L=1.74 mult=1
+XRD1 voutn VDD VSS sky130_fd_pr__res_high_po_5p73 L=3.17 mult=1
+XRD2 voutp VDD VSS sky130_fd_pr__res_high_po_5p73 L=3.17 mult=1
+XM1 voutn vinp vtail VSS sky130_fd_pr__nfet_01v8_lvt L=0.15 W=80 nf=8 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=1
+XM2 voutp vinn vtail VSS sky130_fd_pr__nfet_01v8_lvt L=0.15 W=80 nf=8 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=1
+XRref nbias VDD VSS sky130_fd_pr__res_high_po_2p85 L=5.41 mult=1
 XM3 vtail nbias VSS VSS sky130_fd_pr__nfet_01v8 L=0.5 W=80 nf=8 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=1
 XM4 nbias nbias VSS VSS sky130_fd_pr__nfet_01v8 L=0.5 W=10 nf=1 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=1
-XRdum1 VSS VSS VSS sky130_fd_pr__res_high_po_5p73 L=2.21 mult=1
-XRdum2 VSS VSS VSS sky130_fd_pr__res_high_po_5p73 L=2.21 mult=1
+XRdum1 VSS VSS VSS sky130_fd_pr__res_high_po_5p73 L=3.17 mult=1
+XRdum2 VSS VSS VSS sky130_fd_pr__res_high_po_5p73 L=3.17 mult=1
 XMdum VSS VSS VSS VSS sky130_fd_pr__nfet_01v8_lvt L=0.15 W=10 nf=1 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 mult=4 m=4
 .ends
 .end

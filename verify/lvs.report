@@ -14,21 +14,6 @@ Circuit 1: sky130_fd_pr__nfet_01v8_lvt     |Circuit 2: sky130_fd_pr__nfet_01v8_l
 Cell pin lists are equivalent.
 Device classes sky130_fd_pr__nfet_01v8_lvt and sky130_fd_pr__nfet_01v8_lvt are equivalent.
 
-Circuit 1 cell sky130_fd_pr__nfet_01v8 and Circuit 2 cell sky130_fd_pr__nfet_01v8 are black boxes.
-Warning: Equate pins:  cell sky130_fd_pr__nfet_01v8 is a placeholder, treated as a black box.
-Warning: Equate pins:  cell sky130_fd_pr__nfet_01v8 is a placeholder, treated as a black box.
-
-Subcircuit pins:
-Circuit 1: sky130_fd_pr__nfet_01v8         |Circuit 2: sky130_fd_pr__nfet_01v8         
--------------------------------------------|-------------------------------------------
-1                                          |1                                          
-2                                          |2                                          
-3                                          |3                                          
-4                                          |4                                          
----------------------------------------------------------------------------------------
-Cell pin lists are equivalent.
-Device classes sky130_fd_pr__nfet_01v8 and sky130_fd_pr__nfet_01v8 are equivalent.
-
 Circuit 1 cell sky130_fd_pr__res_high_po_5p73 and Circuit 2 cell sky130_fd_pr__res_high_po_5p73 are black boxes.
 Warning: Equate pins:  cell sky130_fd_pr__res_high_po_5p73 is a placeholder, treated as a black box.
 Warning: Equate pins:  cell sky130_fd_pr__res_high_po_5p73 is a placeholder, treated as a black box.
@@ -56,23 +41,38 @@ Circuit 1: sky130_fd_pr__res_high_po_2p85  |Circuit 2: sky130_fd_pr__res_high_po
 ---------------------------------------------------------------------------------------
 Cell pin lists are equivalent.
 Device classes sky130_fd_pr__res_high_po_2p85 and sky130_fd_pr__res_high_po_2p85 are equivalent.
+
+Circuit 1 cell sky130_fd_pr__nfet_01v8 and Circuit 2 cell sky130_fd_pr__nfet_01v8 are black boxes.
+Warning: Equate pins:  cell sky130_fd_pr__nfet_01v8 is a placeholder, treated as a black box.
+Warning: Equate pins:  cell sky130_fd_pr__nfet_01v8 is a placeholder, treated as a black box.
+
+Subcircuit pins:
+Circuit 1: sky130_fd_pr__nfet_01v8         |Circuit 2: sky130_fd_pr__nfet_01v8         
+-------------------------------------------|-------------------------------------------
+1                                          |1                                          
+2                                          |2                                          
+3                                          |3                                          
+4                                          |4                                          
+---------------------------------------------------------------------------------------
+Cell pin lists are equivalent.
+Device classes sky130_fd_pr__nfet_01v8 and sky130_fd_pr__nfet_01v8 are equivalent.
 Flattening unmatched subcell unit_nch_dum in circuit bomu (0)(4 instances)
 Flattening unmatched subcell sky130_fd_pr__nfet_01v8_lvt_SGEXM9 in circuit bomu (0)(4 instances)
-Flattening unmatched subcell unit_nch in circuit bomu (0)(16 instances)
-Flattening unmatched subcell sky130_fd_pr__nfet_01v8_lvt_3APHRT in circuit bomu (0)(16 instances)
+Flattening unmatched subcell unit_nch in circuit bomu (0)(4 instances)
+Flattening unmatched subcell sky130_fd_pr__nfet_01v8_lvt_3APHRT in circuit bomu (0)(4 instances)
+Flattening unmatched subcell sky130_fd_pr__res_high_po_5p73_NZ96RV in circuit bomu (0)(4 instances)
+Flattening unmatched subcell sky130_fd_pr__res_high_po_2p85_5LU3K3 in circuit bomu (0)(1 instance)
 Flattening unmatched subcell sky130_fd_pr__nfet_01v8_C4LZNB in circuit bomu (0)(9 instances)
-Flattening unmatched subcell sky130_fd_pr__res_high_po_5p73_YL5N34 in circuit bomu (0)(4 instances)
-Flattening unmatched subcell sky130_fd_pr__res_high_po_2p85_3PJE88 in circuit bomu (0)(1 instance)
 
-Class bomu (0):  Merged 73 parallel devices.
+Class bomu (0):  Merged 25 parallel devices.
 Class bomu (1):  Merged 1 parallel devices.
 Subcircuit summary:
 Circuit 1: bomu                            |Circuit 2: bomu                            
 -------------------------------------------|-------------------------------------------
-sky130_fd_pr__nfet_01v8_lvt (68->3)        |sky130_fd_pr__nfet_01v8_lvt (6->3)         
-sky130_fd_pr__nfet_01v8 (9->2)             |sky130_fd_pr__nfet_01v8 (2)                
+sky130_fd_pr__nfet_01v8_lvt (20->3)        |sky130_fd_pr__nfet_01v8_lvt (6->3)         
 sky130_fd_pr__res_high_po_5p73 (4->3)      |sky130_fd_pr__res_high_po_5p73 (4->3)      
 sky130_fd_pr__res_high_po_2p85 (1)         |sky130_fd_pr__res_high_po_2p85 (1)         
+sky130_fd_pr__nfet_01v8 (9->2)             |sky130_fd_pr__nfet_01v8 (2)                
 Number of devices: 9                       |Number of devices: 9                       
 Number of nets: 8                          |Number of nets: 8                          
 ---------------------------------------------------------------------------------------
