@@ -46,7 +46,7 @@ only_toplevel=false
 value="
 .lib $PDK_ROOT/sky130A/libs.tech/ngspice/sky130.lib.spice tt
 .param VSC=1.052
-.param Va=23.7m
+.param Va=32m
 .param F=1meg
 .control
 tran 0.5n 3u
