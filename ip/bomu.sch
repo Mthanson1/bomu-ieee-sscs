@@ -49,17 +49,17 @@ N 725 -520 740 -520 {lab=VSS}
 N 920 -330 920 -270 {lab=VSS}
 N 880 -300 920 -300 {lab=VSS}
 C {sky130_fd_pr/res_high_po_5p73.sym} 360 -520 0 0 {name=RD1
-L=2.21
+L=3.17
 model=res_high_po_5p73
 spiceprefix=X
 mult=1}
 C {sky130_fd_pr/res_high_po_5p73.sym} 560 -520 0 0 {name=RD2
-L=2.21
+L=3.17
 model=res_high_po_5p73
 spiceprefix=X
 mult=1}
-C {sky130_fd_pr/nfet_01v8_lvt.sym} 340 -340 0 0 {name=M1 model=nfet_01v8_lvt W=320 L=0.15 nf=32 mult=1 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 spiceprefix=X}
-C {sky130_fd_pr/nfet_01v8_lvt.sym} 540 -340 0 0 {name=M2 model=nfet_01v8_lvt W=320 L=0.15 nf=32 mult=1 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 spiceprefix=X}
+C {sky130_fd_pr/nfet_01v8_lvt.sym} 340 -340 0 0 {name=M1 model=nfet_01v8_lvt W=80 L=0.15 nf=8 mult=1 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 spiceprefix=X}
+C {sky130_fd_pr/nfet_01v8_lvt.sym} 540 -340 0 0 {name=M2 model=nfet_01v8_lvt W=80 L=0.15 nf=8 mult=1 ad=0 as=0 pd=0 ps=0 nrd=0 nrs=0 sa=0 sb=0 sd=0 spiceprefix=X}
 C {devices/ipin.sym} 300 -340 0 0 {name=P_vinp lab=vinp}
 C {devices/ipin.sym} 500 -340 0 0 {name=P_vinn lab=vinn}
 C {devices/opin.sym} 420 -430 0 0 {name=P_voutn lab=voutn}
@@ -73,7 +73,7 @@ C {devices/lab_pin.sym} 525 -520 0 0 {name=l_rw2 lab=VSS}
 C {devices/lab_pin.sym} 360 -450 0 0 {name=l_von lab=voutn}
 C {devices/lab_pin.sym} 560 -450 0 1 {name=l_vop lab=voutp}
 C {sky130_fd_pr/res_high_po_2p85.sym} 200 -240 0 0 {name=Rref
-L=1.74
+L=5.41
 model=res_high_po_2p85
 spiceprefix=X
 mult=1}
@@ -84,12 +84,12 @@ C {devices/lab_pin.sym} 480 -215 0 0 {name=l_tl lab=vtail}
 C {devices/lab_pin.sym} 165 -240 0 0 {name=l_rrw lab=VSS}
 C {devices/lab_pin.sym} 200 -290 0 0 {name=l_vddr lab=VDD}
 C {sky130_fd_pr/res_high_po_5p73.sym} 180 -520 0 0 {name=Rdum1
-L=2.21
+L=3.17
 model=res_high_po_5p73
 spiceprefix=X
 mult=1}
 C {sky130_fd_pr/res_high_po_5p73.sym} 760 -520 0 0 {name=Rdum2
-L=2.21
+L=3.17
 model=res_high_po_5p73
 spiceprefix=X
 mult=1}
