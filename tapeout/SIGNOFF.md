@@ -1,6 +1,6 @@
 # BoMu -- sky130A signoff bundle
 
-Signoff date: 2026-08-25
+Signoff date: 2026-10-28
 Top cell: `bomu`
 PDK: sky130A
 
@@ -22,7 +22,7 @@ PDK: sky130A
 ## GDS checksum
 
 ```
-sha256  5b022c43fe23cbf78cfae09917412b6e1e80e3fa6b9697b11edda556e265eccb  bomu.gds
+sha256  ae7d3c812035b1ba8f9560c461c0b1ebbb2fc0ba43d2123ad1f54eaa9a64ffe5  bomu.gds
 ```
 
 ## Reproduce (inside IIC-OSIC-TOOLS, PDK=sky130A)
