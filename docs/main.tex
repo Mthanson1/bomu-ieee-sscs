@@ -281,7 +281,15 @@ the $g_m/I_D$ grid predicts the sized device from the targets with essentially n
 iteration. The one visible gap is $V_{ov}$ ($+6.5\%$): the $V_{ov}\approx2/(g_m/I_D)$
 rule-of-thumb underestimates the true overdrive in moderate inversion, but because $W$
 is taken from the grid current density $J_D$ (not from $V_{ov}$), that approximation
-does not propagate into the sizing. The output rows then confirm the baseline sits where
+does not propagate into the sizing. The cockpit is carried at $W=68\mu m$ rather than the
+adopted $W=80\mu m$ deliberately: this is the point the sizing flow produces directly
+from the targets, with no hand adjustment, so the predicted-vs-SPICE error isolates the
+accuracy of the $g_m/I_D$ grid itself. The adopted design differs only by the deliberate
+GBW-wall and parasitic current margin of Sections~\ref{sec:hit}--\ref{sec:parasitic}
+(and a re-centred $R_D$), which are design choices, not predictions; rerunning the cockpit
+there would reproduce the same current-domain errors --- the grid accuracy is independent
+of the sizing point --- offset by that known margin, so it would add nothing about the
+method. The output rows then confirm the baseline sits where
 the flow places it --- $A_{v0}=8.2\,$dB and $f_{-3\mathrm{dB}}=184\,$MHz --- i.e.\ comfortably past the
 bandwidth target but short of the $10\,$dB gain, the $r_o$-limited shortfall of
 Section~\ref{sec:ro} that the small $g_m$ increase of Section~\ref{sec:hit} then
@@ -748,8 +756,9 @@ the same balance that suppressed the even harmonics in Section~\ref{sec:swing}.
 \paragraph{Noise.} The input-referred noise of the extracted netlist integrated over
 $10Hz$--$1GHz$ is $\approx93\mu V_{rms}$ (device thermal/flicker dominated, so it is
 taken at the nominal matched point rather than per mismatch draw). Against the
-$\sim34mV_{rms}$ input drive that produces the $400mV_{pp}$ output swing, this is an
-input SNR of order $51dB$. The integration band runs well past the $\sim164MHz$ output
+$\sim45mV_{rms}$ differential input drive that produces the $400mV_{pp}$ output swing
+(the $v_{id,pp}=4V_a=128mV_{pp}$ at $V_a=32mV$ of Section~\ref{sec:swing}), this is an
+input SNR of order $54dB$. The integration band runs well past the $\sim164MHz$ output
 pole, so the figure is conservative: above the pole the falling gain inflates the
 input-referred density, and most of the integral accumulates beyond the usable band.
 
@@ -908,6 +917,32 @@ the quality metrics land at $\sigma(V_{os})\approx2.8mV$, $\text{CMRR}\approx67d
 $\text{PSRR}\approx53dB$ and $\approx93\mu V_{rms}$ input-referred noise, with the
 supply-rejection path the most parasitic-sensitive ($A_{sc}$ rising from the ideal
 $R_D$-coupling estimate once the extracted $V_{DD}$-to-drain capacitors are included).
+
+\paragraph{Further improvements.} Several directions would push the design past its
+current limits, in rough order of leverage. (i) The headline constraint is the
+single-stage gain--bandwidth wall $g_m/(2\pi C_L)$ (Section~\ref{sec:sweeps}), and
+Section~\ref{sec:ro} showed the shortfall is the finite $r_o$ dragging $R_D\|r_o$ below
+$R_D$; \emph{cascoding the load} (or an active/regulated cascode) would raise $r_o$ so the
+gain approaches the ideal $g_m R_D$ ceiling at the same current, recovering the missing
+dB without buying it with power --- at the cost of output headroom, which the fixed $1.2V$
+supply and $400mV_{pp}$ swing make tight. (ii) \emph{Shunt (inductive) peaking} at the
+drain --- a small series inductor or an active-inductor load into the pad --- would extend
+$f_{-3dB}$ at fixed $R_D$ and current, trading a little area/peaking for bandwidth margin;
+attractive here because the dominant pole sits at the pad. (iii) The supply-rejection
+path is the weakest small-signal link ($A_{sc}=-7.8dB$, Section~\ref{sec:quality}, set by
+$V_{DD}$ coupling through $R_D$ onto the drains); a \emph{replica-biased or regulated
+drain load} would attenuate that path and tighten PSRR. (iv) The simple tail mirror is
+compliance-limited (Section~\ref{sec:tailbias}); a \emph{low-voltage cascode or
+constant-$g_m$ tail} would raise the tail output resistance (better CMRR) and cut the
+supply/temperature sensitivity of $I_{tail}$, if the $200mV$ budget can be relaxed or a
+cascode fitted within it. (v) On \emph{verification}, the present Monte Carlo is
+local-mismatch only; a global process-corner MC together with the full $\pm5\%V_{DD}$
+temperature grid --- the robustness path the $W=320$ regulated-supply variant already
+demonstrates --- would complete a true statistical sign-off. (vi) If offset ever becomes
+a spec, \emph{chopping or auto-zeroing} (or simply more pair area) would push below the
+present $\sigma(V_{os})\approx2.8mV$. The cascode of (i) is the single change that most
+directly attacks the $r_o$-limited ceiling this report identifies as the fundamental
+limit.
 
 \bibliographystyle{IEEEtran}
 \bibliography{Sources}
