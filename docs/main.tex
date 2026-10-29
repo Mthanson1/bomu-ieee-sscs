@@ -892,9 +892,14 @@ margin give the \textbf{adopted $W=80\mu m$ design}
 ($R_D\approx245\Omega$, $I_{tail}=2.28mA$, $2.74mW$), which meets both targets at the
 \texttt{tt} corner --- $A_{v0}=10.1dB$, $f_{-3dB}=168MHz$, $400mV_{pp}$ swing at
 $0.61\%$ THD --- and survives the native \emph{local} device-mismatch MC
-(Section~\ref{sec:quality}), which moves offset but not the differential
-gain/bandwidth. This MC covers per-device mismatch only; it is \emph{not} a
-global process-corner Monte Carlo, so it is not a full statistical sign-off. On the area--power plane (Sections~\ref{sec:areapower}--\ref{sec:cost})
+(Section~\ref{sec:quality}), which moves offset; the differential gain and bandwidth are
+expected to be left essentially unchanged by mismatch, since the common-mode and mismatch
+terms cancel in a balanced pair --- though the draws were scored for offset and
+CMRR/PSRR, not for a gain/BW spread, so this is an expectation rather than a measured
+$\sigma(A_{v0})/\sigma(f_{-3dB})$. This MC covers per-device mismatch only; it is
+\emph{not} a global process-corner Monte Carlo, so it is not a full statistical sign-off
+--- a global process-corner MC (with the full $V_{DD}$/temperature grid) remains a future
+step. On the area--power plane (Sections~\ref{sec:areapower}--\ref{sec:cost})
 it sits near the joint minimum of area \emph{and} power the \texttt{tt} criteria allow,
 on the $g_m/I_D=15$ ray that is the optimum of a power-weighted cost.
 
@@ -912,7 +917,8 @@ The offset/CMRR/PSRR/noise characterisation of Section~\ref{sec:quality} is now 
 directly on the extracted (post-layout) netlist: the native device-mismatch Monte Carlo
 and the CMRR/PSRR/noise measurements all exercise \texttt{verify/bomu\_rcx.spice}, so
 they carry both the adopted $W{=}80\mu m$ sizing and the layout parasitics. The headline
-differential gain/bandwidth are untouched by mismatch (as expected for a balanced pair);
+differential gain/bandwidth are expected to be essentially untouched by mismatch
+(balanced-pair cancellation; the draws were not scored for their spread);
 the quality metrics land at $\sigma(V_{os})\approx2.8mV$, $\text{CMRR}\approx67dB$,
 $\text{PSRR}\approx53dB$ and $\approx93\mu V_{rms}$ input-referred noise, with the
 supply-rejection path the most parasitic-sensitive ($A_{sc}$ rising from the ideal
@@ -921,10 +927,12 @@ $R_D$-coupling estimate once the extracted $V_{DD}$-to-drain capacitors are incl
 \paragraph{Further improvements.} Several directions would push the design past its
 current limits. (i) The headline constraint is the single-stage gain--bandwidth wall
 $g_m/(2\pi C_L)$ (Section~\ref{sec:sweeps}), and the analysis there is explicit that the
-\emph{only} lever on that wall is more $g_m$ per mW: at fixed gain and swing the bandwidth
-scales linearly with power at a slope set by the $g_m/I_D$ efficiency
-(Eq.~\eqref{eq:frontier}), and no load re-tuning escapes the $474MHz$ ideal product
-(Eq.~\eqref{eq:gbw}, Table~\ref{tab:rdbracket}). Cascoding to raise $r_o$ would only slide
+\emph{only} lever on that wall is more $g_m$ --- bought either by spending more power
+(moving up a $g_m/I_D$ ray) or by raising the $g_m/I_D$ efficiency itself (a steeper ray,
+bounded above by the swing/headroom walls of Section~\ref{sec:frontier}). At fixed gain
+and swing the bandwidth scales linearly with power at a slope set by that $g_m/I_D$
+efficiency (Eq.~\eqref{eq:frontier}), and no load re-tuning escapes the $474MHz$ ideal
+product (Eq.~\eqref{eq:gbw}, Table~\ref{tab:rdbracket}). Cascoding to raise $r_o$ would only slide
 the design along that hyperbola --- more gain for less bandwidth --- and still miss both
 targets at the baseline $g_m$, so it is not a way around the wall. What a cascode
 \emph{can} do, applied to the \emph{input pair} rather than the load, is reduce the Miller
