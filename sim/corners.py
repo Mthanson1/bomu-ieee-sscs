@@ -13,9 +13,11 @@
                        pair width passing process x temp, then the VDD window.
     corners.py itail   Sweep the tail current (via Rref) at the binding corners
                        to prove current alone cannot clear the GBW wall.
-    corners.py mc      Input-referred offset Monte Carlo. sky130 open ngspice has
-                       no native statistical mismatch, so mismatch is injected
-                       (Pelgrom Vth + W/beta + load-R); see MC_* constants.
+    corners.py mc      Input-referred offset Monte Carlo with INJECTED mismatch
+                       (assumed-A_VT Pelgrom Vth + load-R); see MC_* constants.
+    corners.py mc_mm   Same, but NATIVE sky130 mismatch (MC_MM_SWITCH*AGAUSS in the
+                       .pm3 models -- no assumed A_VT). Per-draw re-invoke; mismatch
+                       only (sky130A open has no native global-process MC).
     corners.py acq     CMRR, PSRR and input-referred noise at the nominal point
                        (injects one 1-sigma mismatch so the diff CMRR/PSRR are finite).
 
@@ -30,6 +32,7 @@ import math
 import os
 import random
 import re
+import statistics
 import subprocess
 import sys
 import tempfile
@@ -51,17 +54,18 @@ TEMPS = [0, 27, 70]                 # deg C (agreed 0-70 box)
 VDDS = [1.14, 1.20, 1.26]           # +/-5% around 1.2 V
 
 
-# shared helpers
 def val(out, name):
     m = re.search(re.escape(name) + r"\s*=\s*([-+0-9.eE]+)", out)
     return float(m.group(1)) if m else float("nan")
 
 
-def ngspice(deck_text):
+def ngspice(deck_text, timeout=300):
     """Run one deck through ngspice -b and return its combined output.
 
     The deck has to sit in sim/ so ngspice picks up sim/.spiceinit
     (ngbehavior=hsa); a deck in /tmp makes the sky130 models parse to all-NaN.
+    The extracted-netlist mismatch decks run many draws in one process and need a
+    much larger timeout than the default single-analysis budget.
     """
     dk = tempfile.NamedTemporaryFile(suffix=".spice", delete=False, mode="w",
                                      dir=HERE)
@@ -69,7 +73,7 @@ def ngspice(deck_text):
     dk.close()
     try:
         p = subprocess.run(["ngspice", "-b", dk.name], cwd=HERE,
-                           capture_output=True, text=True, timeout=300)
+                           capture_output=True, text=True, timeout=timeout)
         return p.stdout + p.stderr
     finally:
         os.remove(dk.name)
@@ -189,8 +193,9 @@ PEX_VARIANTS = {
     "rcx": os.path.join(ROOT, "verify", "bomu_rcx.spice"),   # R + C
 }
 
-# The extracted subckt ports are VSS voutn voutp VDD vinp vinn (substrate folds
-# into VSS, no separate port), so the DUT instance below is wired to match.
+# The extracted subckt ports are vinp vinn voutn voutp VDD VSS (relayout: now
+# matches the schematic subckt order; substrate folds into VSS, no separate
+# port), so the DUT instance below is wired the same way as the schematic deck.
 DECK_PEX = """* BoMu POST-LAYOUT ({variant}) corner: {corner}, T={temp}C, VDD={vdd}
 .lib $PDK_ROOT/sky130A/libs.tech/ngspice/sky130.lib.spice {corner}
 .include {netlist}
@@ -203,7 +208,7 @@ Vdp gp vcm dc 0 ac  0.5
 Vdn gn vcm dc 0 ac -0.5
 Rsp gp vinp 100
 Rsn gn vinn 100
-Xdut 0 voutn voutp vdd vinp vinn bomu
+Xdut vinp vinn voutp voutn vdd 0 bomu
 CLp voutp 0 5p
 CLn voutn 0 5p
 .control
@@ -610,21 +615,15 @@ def cmd_itail(_args):
                   f"(binding constraint, likely BW)")
 
 
-# sub 'mc': input-referred offset Monte Carlo (injected mismatch)
-#
-# sky130 open ngspice carries mismatch *slopes* but never applies them (no
-# agauss/mc_mm_switch term in the models), and the device subckt ignores delvto,
-# so there is no native statistical MC. We inject it: a gate-referred Vth offset
-# per device (Pelgrom, so that term refers straight to the input) and a load-R
-# mismatch (simulated on ideal, alterable loads). beta/W mismatch is a smaller
-# second-order term left out of the fast loop. AVT and sigma_R are estimates --
-# drop in measured values before trusting the absolute Vos. The whole sweep runs
-# in ONE ngspice call (DC-op loop) so the sky130 lib loads once, not per draw.
+# sub 'mc': input-referred offset MC, INJECTED assumed-A_VT mismatch. Fast
+# cross-check only; 'mc_mm' draws the real sky130 mismatch. AVT/SIGMA_R are
+# estimates. Gotcha: all draws share ONE ngspice process (DC-op loop) -- re-parsing
+# the sky130 lib per draw would dominate the runtime.
 MC_RUNS = 200
 MC_AVT = 4.0            # mV*um, sky130 nfet Vth Pelgrom coefficient (ASSUMPTION)
 MC_SIGMA_R = 0.005      # per-resistor fractional load-R mismatch (estimate)
-MC_AREA = 320 * 0.15    # pair device gate area um^2 (W_total * L)
-MC_RD_L = 2.21          # nominal res_high_po_5p73 length
+MC_AREA = 80 * 0.15     # pair device gate area um^2 (W_total * L)
+MC_RD_L = 3.17          # nominal res_high_po_5p73 length (adopted R_D)
 MC_RD_SLOPE = 56.42     # dR/dL ohm/um for res_high_po_5p73 (see rd_nom)
 
 DECK_MC = """* BoMu offset MC (single ngspice call, DC-op loop): tt, 27C, 1.20V
@@ -637,11 +636,11 @@ Vdp g1 vcm dc 0 ac 0.5
 Vdn g2 vcm dc 0 ac -0.5
 Vos1 g1 gm1 dc 0
 Vos2 g2 gm2 dc 0
-XM1 voutn gm1 vtail 0 sky130_fd_pr__nfet_01v8_lvt L=0.15 W=320 nf=32
-XM2 voutp gm2 vtail 0 sky130_fd_pr__nfet_01v8_lvt L=0.15 W=320 nf=32
+XM1 voutn gm1 vtail 0 sky130_fd_pr__nfet_01v8_lvt L=0.15 W=80 nf=8
+XM2 voutp gm2 vtail 0 sky130_fd_pr__nfet_01v8_lvt L=0.15 W=80 nf=8
 RD1 voutn vdd {rnom}
 RD2 voutp vdd {rnom}
-XRref nbias vdd 0 sky130_fd_pr__res_high_po_2p85 L=1.74 mult=1
+XRref nbias vdd 0 sky130_fd_pr__res_high_po_2p85 L=5.41 mult=1
 XM4 nbias nbias 0 0 sky130_fd_pr__nfet_01v8 L=0.5 W=10 nf=1
 XM3 vtail nbias 0 0 sky130_fd_pr__nfet_01v8 L=0.5 W=80 nf=8
 CLp voutp 0 5p
@@ -674,8 +673,8 @@ def cmd_mc(args):
     gain = 10 ** (a0_db / 20.0)
     vod = [float(m) for m in re.findall(r"^x\s*=\s*([-+0-9.eE]+)", out, re.M)]
     vos = [v / gain for v in vod if v == v]            # drop NaN
-    print("input-referred offset Monte Carlo (INJECTED mismatch; sky130 open "
-          "ngspice has no native statistical MC)")
+    print("input-referred offset Monte Carlo (INJECTED assumed-A_VT mismatch; "
+          "see 'mc_mm' for native sky130 mismatch with no assumed A_VT)")
     print(f"draws={args.runs}  AVT={args.avt} mV.um -> sigma_Vth="
           f"{sig_vth*1e3:.2f} mV/device (gate area {MC_AREA:.1f} um^2); "
           f"R_D mismatch sigma={MC_SIGMA_R*100:.2f}%  (ASSUMPTIONS)")
@@ -691,15 +690,138 @@ def cmd_mc(args):
           f"3sigma {3*sd*1e3:.3f} mV   worst |{abs(worst)*1e3:.3f}| mV")
 
 
-# sub 'acq': CMRR, PSRR and input-referred noise at the nominal point
-#
-# A perfectly matched differential output rejects common-mode and supply coupling
-# to first order (they appear as common mode and cancel), so nominal CMRR/PSRR of
-# the differential path are matching-limited, not tail-limited. We therefore inject
-# one representative 1-sigma mismatch (same Pelgrom model as 'mc': dVth on M1 and
-# dR_D on RD1) to get finite, physical differential CMRR/PSRR; the common-mode
-# gains A_cc / A_sc are finite regardless and are reported too. Noise is the
-# input-referred integrated value over 10 Hz-1 GHz.
+# sub 'mc_mm': input-referred offset from NATIVE sky130 mismatch
+# (MC_MM_SWITCH*AGAUSS in the .pm3 models; no assumed A_VT). Gotchas:
+#   - a top-level '.param mc_mm_switch=1' is clobbered by the lib section's internal
+#     mc_mm_switch=0, so flip it with 'alterparam' AFTER .lib loads, then 'reset';
+#   - a plain 'reset' here does not redraw, so each draw is a FRESH ngspice process;
+#   - sky130A open has no native global-PROCESS MC (MC_PR_SWITCH is a dead hook):
+#     this is MISMATCH only; global spread stays with the named ss/ff corners.
+DECK_MC_MM = """* BoMu native-mismatch MC draw: {corner}, 27C, 1.20V, W={wd} nf={nf}
+.lib $PDK_ROOT/sky130A/libs.tech/ngspice/sky130.lib.spice {corner}
+.temp 27
+Vdd vdd 0 1.20
+Vcm vcm 0 dc {vsc}
+Vdp g1 vcm dc 0 ac  0.5
+Vdn g2 vcm dc 0 ac -0.5
+XM1 voutn g1 vtail 0 sky130_fd_pr__nfet_01v8_lvt L=0.15 W={wd} nf={nf}
+XM2 voutp g2 vtail 0 sky130_fd_pr__nfet_01v8_lvt L=0.15 W={wd} nf={nf}
+XRD1 voutn vdd 0 sky130_fd_pr__res_high_po_5p73 L={lrd} mult=1
+XRD2 voutp vdd 0 sky130_fd_pr__res_high_po_5p73 L={lrd} mult=1
+XRref nbias vdd 0 sky130_fd_pr__res_high_po_2p85 L=5.41 mult=1
+XM4 nbias nbias 0 0 sky130_fd_pr__nfet_01v8 L=0.5 W=10 nf=1
+XM3 vtail nbias 0 0 sky130_fd_pr__nfet_01v8 L=0.5 W=80 nf=8
+CLp voutp 0 5p
+CLn voutn 0 5p
+.control
+setseed {seed}
+alterparam mc_mm_switch=1
+reset
+ac dec 10 1k 10G
+let gdb = db(v(voutp)-v(voutn))
+meas ac a0_db find gdb at=1k
+op
+let vod = v(voutp)-v(voutn)
+print a0_db
+print vod
+.endc
+.end
+"""
+
+
+# Post-layout offset: the same native-mismatch draw on the EXTRACTED netlist.
+# Gotchas: contrary to the inline 'mc_mm' note above, an in-process 'reset' DOES
+# redraw the mismatch here (verified: per-draw offsets differ), so all draws share
+# ONE process (foreach over seeds). And 'op' must precede 'ac' -- on the
+# mismatch-enabled extracted netlist an 'ac' with no prior DC solution won't converge.
+DECK_MC_MM_PEX = """* BoMu POST-LAYOUT native-mismatch offset draws ({variant}): {corner}, 27C, 1.20V
+.lib $PDK_ROOT/sky130A/libs.tech/ngspice/sky130.lib.spice {corner}
+.include {netlist}
+.temp 27
+Vdd vdd 0 1.20
+Vsc vcm 0 dc {vsc}
+Vdp gp vcm dc 0 ac  0.5
+Vdn gn vcm dc 0 ac -0.5
+Rsp gp vinp 100
+Rsn gn vinn 100
+Xdut vinp vinn voutp voutn vdd 0 bomu
+CLp voutp 0 5p
+CLn voutn 0 5p
+.control
+alterparam mc_mm_switch=1
+foreach s {seeds}
+  setseed $s
+  reset
+  op
+  let vod = v(voutp)-v(voutn)
+  print vod
+  ac dec 5 1k 10k
+  let gdb = db(v(voutp)-v(voutn))
+  meas ac a0_db find gdb at=1k
+end
+.endc
+.end
+"""
+
+
+def cmd_mc_mm(args):
+    # default DUT = the adopted W=80 pair; --wd/--nf/--lrd for exploration
+    lrd = args.lrd
+    pex = getattr(args, "pex", None)
+    print("input-referred offset Monte Carlo (NATIVE sky130 mismatch; "
+          "MC_MM_SWITCH*AGAUSS in the .pm3 models -- no assumed A_VT)")
+    if pex:
+        netlist = PEX_VARIANTS[pex]
+        print(f"POST-LAYOUT DUT: {os.path.relpath(netlist, ROOT)} (extracted "
+              f"adopted W=80 design);  draws={args.runs}  corner={args.corner}")
+    else:
+        print(f"DUT W={args.wd} nf={args.nf}  R_D=res_high_po_5p73 L={lrd} "
+              f"(~{rd_nom(lrd):.0f} ohm);  draws={args.runs}  corner={args.corner}")
+    vos = []
+    a0s = []
+    if pex:
+        # one process: foreach over seeds, parse the vod/a0_db pairs in order
+        seeds = " ".join(str(1234 + i) for i in range(args.runs))
+        out = ngspice(DECK_MC_MM_PEX.format(variant=pex, corner=args.corner,
+                                            netlist=PEX_VARIANTS[pex], vsc=VSC,
+                                            seeds=seeds),
+                      timeout=max(600, 180 * args.runs))
+        vods = [float(m) for m in re.findall(r"vod\s*=\s*([-+0-9.eE]+)", out)]
+        a0db = [float(m) for m in re.findall(r"a0_db\s*=\s*([-+0-9.eE]+)", out)]
+        for vod, a0_db in zip(vods, a0db):
+            if vod != vod or a0_db != a0_db:      # skip NaN draws
+                continue
+            vos.append(vod / (10 ** (a0_db / 20.0)))
+            a0s.append(a0_db)
+    else:
+        for i in range(args.runs):
+            out = ngspice(DECK_MC_MM.format(corner=args.corner, vsc=VSC, wd=args.wd,
+                                            nf=args.nf, lrd=lrd, seed=1234 + i))
+            a0_db = val(out, "a0_db")
+            vod = val(out, "vod")
+            if vod != vod or a0_db != a0_db:          # skip NaN draws
+                continue
+            gain = 10 ** (a0_db / 20.0)
+            vos.append(vod / gain)
+            a0s.append(a0_db)
+    n = len(vos)
+    if n == 0:
+        print("no valid draws -- check the deck / container")
+        return
+    mean = sum(vos) / n
+    sd = (sum((v - mean) ** 2 for v in vos) / n) ** 0.5
+    worst = max(vos, key=abs)
+    a0_mean = sum(a0s) / n
+    print(f"gain A0~{a0_mean:.2f} dB (mean of draws);  {n}/{args.runs} valid draws")
+    print(f"Vos : mean {mean*1e3:+.3f} mV   sigma {sd*1e3:.3f} mV   "
+          f"3sigma {3*sd*1e3:.3f} mV   worst |{abs(worst)*1e3:.3f}| mV")
+
+
+# sub 'acq': CMRR, PSRR and input-referred noise at the nominal point.
+# Gotcha: a perfectly matched diff output rejects common-mode/supply to first order,
+# so differential CMRR/PSRR are matching-limited and would read as infinite without
+# mismatch -- we inject one representative 1-sigma mismatch (dVth on M1, dR_D on RD1)
+# to get finite, physical numbers. A_cc/A_sc are finite regardless.
 DECK_ACQ = """* BoMu CMRR/PSRR/noise at tt, 27C, 1.20V (with 1-sigma mismatch)
 .lib $PDK_ROOT/sky130A/libs.tech/ngspice/sky130.lib.spice tt
 .temp 27
@@ -710,11 +832,11 @@ Vdp g1 vcm dc 0 ac 0
 Vdn g2 vcm dc 0 ac 0
 Vos1 g1 gm1 dc {d1}
 Vos2 g2 gm2 dc 0
-XM1 voutn gm1 vtail 0 sky130_fd_pr__nfet_01v8_lvt L=0.15 W=320 nf=32
-XM2 voutp gm2 vtail 0 sky130_fd_pr__nfet_01v8_lvt L=0.15 W=320 nf=32
+XM1 voutn gm1 vtail 0 sky130_fd_pr__nfet_01v8_lvt L=0.15 W=80 nf=8
+XM2 voutp gm2 vtail 0 sky130_fd_pr__nfet_01v8_lvt L=0.15 W=80 nf=8
 XRD1 voutn vdd 0 sky130_fd_pr__res_high_po_5p73 L={lrd1} mult=1
 XRD2 voutp vdd 0 sky130_fd_pr__res_high_po_5p73 L={lrd2} mult=1
-XRref nbias vdd 0 sky130_fd_pr__res_high_po_2p85 L=1.74 mult=1
+XRref nbias vdd 0 sky130_fd_pr__res_high_po_2p85 L=5.41 mult=1
 XM4 nbias nbias 0 0 sky130_fd_pr__nfet_01v8 L=0.5 W=10 nf=1
 XM3 vtail nbias 0 0 sky130_fd_pr__nfet_01v8 L=0.5 W=80 nf=8
 CLp voutp 0 5p
@@ -753,7 +875,130 @@ print inoise_total onoise_total
 """
 
 
+# Post-layout CMRR/PSRR on the EXTRACTED netlist. Injected mismatch can't reach
+# inside the black-box '.subckt bomu', so the finite differential CMRR/PSRR come from
+# native per-device mismatch (mc_mm_switch). Gotchas: report the MEDIAN over draws
+# (CMRR/PSRR scale per draw, so one draw isn't representative); each draw does 'op'
+# FIRST or the 'ac' hangs without a DC solution; all quantities are read at 1 kHz, so
+# the 1k..10k sweeps suffice (a full 1k..10G sweep is ~70x slower for no gain).
+DECK_CMRR_PEX = """* BoMu POST-LAYOUT CMRR/PSRR ({variant}): {corner}, 27C, 1.20V, native-mismatch draws
+.lib $PDK_ROOT/sky130A/libs.tech/ngspice/sky130.lib.spice {corner}
+.include {netlist}
+.temp 27
+Vdd vdd 0 dc 1.20 ac 0
+Vsc vcm 0 dc {vsc} ac 0
+Vdp gp vcm dc 0 ac 0
+Vdn gn vcm dc 0 ac 0
+Rsp gp vinp 100
+Rsn gn vinn 100
+Xdut vinp vinn voutp voutn vdd 0 bomu
+CLp voutp 0 5p
+CLn voutn 0 5p
+.control
+alterparam mc_mm_switch=1
+foreach s {seeds}
+  setseed $s
+  reset
+  op
+* differential gain A_dd
+  alter vdp ac = 0.5
+  alter vdn ac = -0.5
+  ac dec 5 1k 10k
+  let add_v = db(v(voutp)-v(voutn))
+  meas ac add_db find add_v at=1k
+* common-mode in -> differential out (CMRR) and -> common out (A_cc)
+  alter vdp ac = 0
+  alter vdn ac = 0
+  alter vsc ac = 1
+  ac dec 5 1k 10k
+  let acd_v = db(v(voutp)-v(voutn))
+  let acc_v = db(0.5*(v(voutp)+v(voutn)))
+  meas ac acd_db find acd_v at=1k
+  meas ac acc_db find acc_v at=1k
+* supply in -> differential out (PSRR) and -> common out (A_sc)
+  alter vsc ac = 0
+  alter vdd ac = 1
+  ac dec 5 1k 10k
+  let apd_v = db(v(voutp)-v(voutn))
+  let apc_v = db(0.5*(v(voutp)+v(voutn)))
+  meas ac apd_db find apd_v at=1k
+  meas ac apc_db find apc_v at=1k
+end
+.endc
+.end
+"""
+
+# Input-referred noise on the extracted netlist: run ONCE at the nominal (matched)
+# point -- noise comes from thermal/flicker terms, not the small per-device mismatch.
+DECK_NOISE_PEX = """* BoMu POST-LAYOUT input-referred noise ({variant}): {corner}, 27C, 1.20V
+.lib $PDK_ROOT/sky130A/libs.tech/ngspice/sky130.lib.spice {corner}
+.include {netlist}
+.temp 27
+Vdd vdd 0 dc 1.20 ac 0
+Vsc vcm 0 dc {vsc} ac 0
+Vdp gp vcm dc 0 ac 1
+Vdn gn vcm dc 0 ac 0
+Rsp gp vinp 100
+Rsn gn vinn 100
+Xdut vinp vinn voutp voutn vdd 0 bomu
+CLp voutp 0 5p
+CLn voutn 0 5p
+.control
+op
+noise v(voutp,voutn) vdp dec 10 10 1G
+print inoise_total onoise_total
+.endc
+.end
+"""
+
+
+def _cmd_acq_pex(args):
+    source = args.source
+    netlist = PEX_VARIANTS[source]
+    runs = args.runs
+    print("post-layout small-signal quality (NATIVE sky130 mismatch; "
+          "MC_MM_SWITCH*AGAUSS -- no assumed A_VT)")
+    print(f"netlist={os.path.relpath(netlist, ROOT)}  draws={runs}  "
+          f"corner=tt / 1.20 V / 27 C")
+    # noise: one nominal (matched) run over the full band
+    nout = ngspice(DECK_NOISE_PEX.format(variant=source, corner="tt",
+                                         netlist=netlist, vsc=VSC), timeout=900)
+    inoise = val(nout, "inoise_total")
+    # CMRR/PSRR/A_cc/A_sc: native-mismatch draws (one process), report the median
+    seeds = " ".join(str(1234 + i) for i in range(runs))
+    out = ngspice(DECK_CMRR_PEX.format(variant=source, corner="tt",
+                                       netlist=netlist, vsc=VSC, seeds=seeds),
+                  timeout=max(900, 240 * runs))
+    grab = lambda name: [float(m) for m in
+                         re.findall(re.escape(name) + r"\s*=\s*([-+0-9.eE]+)", out)]
+    adds, acds, accs = grab("add_db"), grab("acd_db"), grab("acc_db")
+    apds, apcs = grab("apd_db"), grab("apc_db")
+    cmrr, psrr, add_l, acc_l, asc_l = ([] for _ in range(5))
+    for add, acd, acc, apd, apc in zip(adds, acds, accs, apds, apcs):
+        if any(x != x for x in (add, acd, apd)):   # skip NaN draws
+            continue
+        cmrr.append(add - acd)
+        psrr.append(add - apd)
+        add_l.append(add)
+        acc_l.append(acc)
+        asc_l.append(apc)
+    n = len(cmrr)
+    if n == 0:
+        print("no valid draws -- check the deck / netlist")
+        return
+    med = statistics.median
+    print(f"{n}/{runs} valid draws; CMRR/PSRR are medians over draws")
+    print(f"  A_dd  differential gain         : {med(add_l):7.2f} dB")
+    print(f"  CMRR  = A_dd - A_cd (diff)       : {med(cmrr):7.2f} dB   "
+          f"(median over draws; common-mode gain A_cc={med(acc_l):.2f} dB)")
+    print(f"  PSRR  = A_dd - A_sd (diff)       : {med(psrr):7.2f} dB   "
+          f"(median over draws; supply->CM gain A_sc={med(asc_l):.2f} dB)")
+    print(f"  input-referred noise (10Hz-1GHz): {inoise*1e6:7.2f} uV,rms  (nominal)")
+
+
 def cmd_acq(args):
+    if getattr(args, "source", "sch") in PEX_VARIANTS:
+        return _cmd_acq_pex(args)
     sig_vth = (MC_AVT * 1e-3) / math.sqrt(MC_AREA)
     r_nom = rd_nom(MC_RD_L)
     lrd1 = MC_RD_L + MC_SIGMA_R * r_nom / MC_RD_SLOPE
@@ -787,12 +1032,29 @@ def main():
     p_mc.add_argument("--runs", type=int, default=MC_RUNS)
     p_mc.add_argument("--avt", type=float, default=MC_AVT,
                       help="Vth Pelgrom coefficient [mV.um]")
-    sub.add_parser("acq", help="CMRR, PSRR and input-referred noise")
+    p_mm = sub.add_parser("mc_mm",
+                          help="input-referred offset MC (NATIVE sky130 mismatch)")
+    p_mm.add_argument("--runs", type=int, default=100)
+    p_mm.add_argument("--wd", type=float, default=80.0, help="pair width [um]")
+    p_mm.add_argument("--nf", type=int, default=8, help="pair fingers")
+    p_mm.add_argument("--lrd", type=float, default=MC_RD_L,
+                      help="res_high_po_5p73 length [um]")
+    p_mm.add_argument("--corner", default="tt", help="sky130 lib section")
+    p_mm.add_argument("--pex", choices=["pex", "rcx"], default=None,
+                      help="run the offset MC on the extracted netlist instead of "
+                           "the inline device (post-layout)")
+    p_acq = sub.add_parser("acq", help="CMRR, PSRR and input-referred noise")
+    p_acq.add_argument("source", nargs="?", default="sch",
+                       choices=["sch", "pex", "rcx"],
+                       help="sch = pre-layout inline (default); pex/rcx = "
+                            "post-layout extracted netlist (native-mismatch draws)")
+    p_acq.add_argument("--runs", type=int, default=50,
+                       help="native-mismatch draws for the post-layout path")
     args = ap.parse_args()
     {
         None: cmd_sch, "sch": cmd_sch, "pex": cmd_pex,
         "search": cmd_search, "vdd": cmd_vdd, "itail": cmd_itail, "mc": cmd_mc,
-        "acq": cmd_acq,
+        "mc_mm": cmd_mc_mm, "acq": cmd_acq,
     }[args.cmd](args)
 
 
