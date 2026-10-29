@@ -27,19 +27,19 @@ Xsky130_fd_pr__nfet_01v8_lvt_3APHRT_0 sky130_fd_pr__nfet_01v8_lvt_3APHRT_0/D0 sk
 + VSUBS sky130_fd_pr__nfet_01v8_lvt_3APHRT
 .ends
 
+.subckt sky130_fd_pr__res_high_po_5p73_NZ96RV R1 R2 VSUBS
+X0 R1 R2 VSUBS sky130_fd_pr__res_high_po_5p73 l=3.17
+.ends
+
+.subckt sky130_fd_pr__res_high_po_2p85_5LU3K3 R1 R2 VSUBS
+X0 R1 R2 VSUBS sky130_fd_pr__res_high_po_2p85 l=5.43
+.ends
+
 .subckt sky130_fd_pr__nfet_01v8_C4LZNB D S G VSUBS
 X0 S G D VSUBS sky130_fd_pr__nfet_01v8 ad=2.9 pd=20.58 as=2.9 ps=20.58 w=10 l=0.5
 .ends
 
-.subckt sky130_fd_pr__res_high_po_5p73_YL5N34 R1 R2 VSUBS
-X0 R1 R2 VSUBS sky130_fd_pr__res_high_po_5p73 l=2.21
-.ends
-
-.subckt sky130_fd_pr__res_high_po_2p85_3PJE88 R1 R2 VSUBS
-X0 R1 R2 VSUBS sky130_fd_pr__res_high_po_2p85 l=1.74
-.ends
-
-.subckt bomu VSS voutn voutp VDD vinp vinn
+.subckt bomu vinp vinn voutn voutp VDD VSS
 Xunit_nch_dum_0 VSS VSS VSS VSS unit_nch_dum
 Xunit_nch_0 voutn voutn voutn vinp sky130_fd_pr__nfet_01v8_C4LZNB_8/D sky130_fd_pr__nfet_01v8_C4LZNB_8/D
 + VSS unit_nch
@@ -50,50 +50,26 @@ Xunit_nch_dum_2 VSS VSS VSS VSS unit_nch_dum
 Xunit_nch_2 voutp voutp voutp vinn sky130_fd_pr__nfet_01v8_C4LZNB_8/D sky130_fd_pr__nfet_01v8_C4LZNB_8/D
 + VSS unit_nch
 Xunit_nch_dum_3 VSS VSS VSS VSS unit_nch_dum
-Xunit_nch_4 voutn voutn voutn vinp sky130_fd_pr__nfet_01v8_C4LZNB_8/D sky130_fd_pr__nfet_01v8_C4LZNB_8/D
-+ VSS unit_nch
-Xunit_nch_3 voutp voutp voutp vinn sky130_fd_pr__nfet_01v8_C4LZNB_8/D sky130_fd_pr__nfet_01v8_C4LZNB_8/D
-+ VSS unit_nch
-Xunit_nch_5 voutn voutn voutn vinp sky130_fd_pr__nfet_01v8_C4LZNB_8/D sky130_fd_pr__nfet_01v8_C4LZNB_8/D
-+ VSS unit_nch
-Xunit_nch_6 voutp voutp voutp vinn sky130_fd_pr__nfet_01v8_C4LZNB_8/D sky130_fd_pr__nfet_01v8_C4LZNB_8/D
-+ VSS unit_nch
-Xunit_nch_7 voutp voutp voutp vinn sky130_fd_pr__nfet_01v8_C4LZNB_8/D sky130_fd_pr__nfet_01v8_C4LZNB_8/D
-+ VSS unit_nch
-Xunit_nch_8 voutn voutn voutn vinp sky130_fd_pr__nfet_01v8_C4LZNB_8/D sky130_fd_pr__nfet_01v8_C4LZNB_8/D
-+ VSS unit_nch
-Xunit_nch_9 voutp voutp voutp vinn sky130_fd_pr__nfet_01v8_C4LZNB_8/D sky130_fd_pr__nfet_01v8_C4LZNB_8/D
-+ VSS unit_nch
-Xunit_nch_10 voutn voutn voutn vinp sky130_fd_pr__nfet_01v8_C4LZNB_8/D sky130_fd_pr__nfet_01v8_C4LZNB_8/D
-+ VSS unit_nch
-Xunit_nch_11 voutn voutn voutn vinp sky130_fd_pr__nfet_01v8_C4LZNB_8/D sky130_fd_pr__nfet_01v8_C4LZNB_8/D
-+ VSS unit_nch
-Xunit_nch_12 voutp voutp voutp vinn sky130_fd_pr__nfet_01v8_C4LZNB_8/D sky130_fd_pr__nfet_01v8_C4LZNB_8/D
-+ VSS unit_nch
-Xunit_nch_13 voutp voutp voutp vinn sky130_fd_pr__nfet_01v8_C4LZNB_8/D sky130_fd_pr__nfet_01v8_C4LZNB_8/D
-+ VSS unit_nch
-Xunit_nch_14 voutn voutn voutn vinp sky130_fd_pr__nfet_01v8_C4LZNB_8/D sky130_fd_pr__nfet_01v8_C4LZNB_8/D
-+ VSS unit_nch
+Xsky130_fd_pr__res_high_po_5p73_NZ96RV_0 VDD voutn VSS sky130_fd_pr__res_high_po_5p73_NZ96RV
+Xsky130_fd_pr__res_high_po_5p73_NZ96RV_1 VSS VSS VSS sky130_fd_pr__res_high_po_5p73_NZ96RV
+Xsky130_fd_pr__res_high_po_5p73_NZ96RV_2 VDD voutp VSS sky130_fd_pr__res_high_po_5p73_NZ96RV
+Xsky130_fd_pr__res_high_po_5p73_NZ96RV_3 VSS VSS VSS sky130_fd_pr__res_high_po_5p73_NZ96RV
 Xunit_nch_15 voutn voutn voutn vinp sky130_fd_pr__nfet_01v8_C4LZNB_8/D sky130_fd_pr__nfet_01v8_C4LZNB_8/D
 + VSS unit_nch
+Xsky130_fd_pr__res_high_po_2p85_5LU3K3_0 sky130_fd_pr__nfet_01v8_C4LZNB_8/G VDD VSS
++ sky130_fd_pr__res_high_po_2p85_5LU3K3
 Xsky130_fd_pr__nfet_01v8_C4LZNB_1 sky130_fd_pr__nfet_01v8_C4LZNB_8/D VSS sky130_fd_pr__nfet_01v8_C4LZNB_8/G
 + VSS sky130_fd_pr__nfet_01v8_C4LZNB
 Xsky130_fd_pr__nfet_01v8_C4LZNB_0 sky130_fd_pr__nfet_01v8_C4LZNB_8/D VSS sky130_fd_pr__nfet_01v8_C4LZNB_8/G
 + VSS sky130_fd_pr__nfet_01v8_C4LZNB
-Xsky130_fd_pr__res_high_po_5p73_YL5N34_0 VSS VSS VSS sky130_fd_pr__res_high_po_5p73_YL5N34
 Xsky130_fd_pr__nfet_01v8_C4LZNB_2 sky130_fd_pr__nfet_01v8_C4LZNB_8/D VSS sky130_fd_pr__nfet_01v8_C4LZNB_8/G
 + VSS sky130_fd_pr__nfet_01v8_C4LZNB
-Xsky130_fd_pr__res_high_po_5p73_YL5N34_1 VDD voutp VSS sky130_fd_pr__res_high_po_5p73_YL5N34
 Xsky130_fd_pr__nfet_01v8_C4LZNB_3 sky130_fd_pr__nfet_01v8_C4LZNB_8/D VSS sky130_fd_pr__nfet_01v8_C4LZNB_8/G
 + VSS sky130_fd_pr__nfet_01v8_C4LZNB
-Xsky130_fd_pr__res_high_po_5p73_YL5N34_2 VDD voutn VSS sky130_fd_pr__res_high_po_5p73_YL5N34
 Xsky130_fd_pr__nfet_01v8_C4LZNB_4 sky130_fd_pr__nfet_01v8_C4LZNB_8/G VSS sky130_fd_pr__nfet_01v8_C4LZNB_8/G
 + VSS sky130_fd_pr__nfet_01v8_C4LZNB
-Xsky130_fd_pr__res_high_po_5p73_YL5N34_3 VSS VSS VSS sky130_fd_pr__res_high_po_5p73_YL5N34
 Xsky130_fd_pr__nfet_01v8_C4LZNB_5 sky130_fd_pr__nfet_01v8_C4LZNB_8/D VSS sky130_fd_pr__nfet_01v8_C4LZNB_8/G
 + VSS sky130_fd_pr__nfet_01v8_C4LZNB
-Xsky130_fd_pr__res_high_po_2p85_3PJE88_0 sky130_fd_pr__nfet_01v8_C4LZNB_8/G VDD VSS
-+ sky130_fd_pr__res_high_po_2p85_3PJE88
 Xsky130_fd_pr__nfet_01v8_C4LZNB_6 sky130_fd_pr__nfet_01v8_C4LZNB_8/D VSS sky130_fd_pr__nfet_01v8_C4LZNB_8/G
 + VSS sky130_fd_pr__nfet_01v8_C4LZNB
 Xsky130_fd_pr__nfet_01v8_C4LZNB_7 sky130_fd_pr__nfet_01v8_C4LZNB_8/D VSS sky130_fd_pr__nfet_01v8_C4LZNB_8/G
