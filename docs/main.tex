@@ -919,30 +919,38 @@ supply-rejection path the most parasitic-sensitive ($A_{sc}$ rising from the ide
 $R_D$-coupling estimate once the extracted $V_{DD}$-to-drain capacitors are included).
 
 \paragraph{Further improvements.} Several directions would push the design past its
-current limits, in rough order of leverage. (i) The headline constraint is the
-single-stage gain--bandwidth wall $g_m/(2\pi C_L)$ (Section~\ref{sec:sweeps}), and
-Section~\ref{sec:ro} showed the shortfall is the finite $r_o$ dragging $R_D\|r_o$ below
-$R_D$; \emph{cascoding the load} (or an active/regulated cascode) would raise $r_o$ so the
-gain approaches the ideal $g_m R_D$ ceiling at the same current, recovering the missing
-dB without buying it with power --- at the cost of output headroom, which the fixed $1.2V$
-supply and $400mV_{pp}$ swing make tight. (ii) \emph{Shunt (inductive) peaking} at the
-drain --- a small series inductor or an active-inductor load into the pad --- would extend
-$f_{-3dB}$ at fixed $R_D$ and current, trading a little area/peaking for bandwidth margin;
-attractive here because the dominant pole sits at the pad. (iii) The supply-rejection
-path is the weakest small-signal link ($A_{sc}=-7.8dB$, Section~\ref{sec:quality}, set by
-$V_{DD}$ coupling through $R_D$ onto the drains); a \emph{replica-biased or regulated
-drain load} would attenuate that path and tighten PSRR. (iv) The simple tail mirror is
-compliance-limited (Section~\ref{sec:tailbias}); a \emph{low-voltage cascode or
-constant-$g_m$ tail} would raise the tail output resistance (better CMRR) and cut the
-supply/temperature sensitivity of $I_{tail}$, if the $200mV$ budget can be relaxed or a
-cascode fitted within it. (v) On \emph{verification}, the present Monte Carlo is
-local-mismatch only; a global process-corner MC together with the full $\pm5\%V_{DD}$
-temperature grid --- the robustness path the $W=320$ regulated-supply variant already
-demonstrates --- would complete a true statistical sign-off. (vi) If offset ever becomes
-a spec, \emph{chopping or auto-zeroing} (or simply more pair area) would push below the
-present $\sigma(V_{os})\approx2.8mV$. The cascode of (i) is the single change that most
-directly attacks the $r_o$-limited ceiling this report identifies as the fundamental
-limit.
+current limits. (i) The headline constraint is the single-stage gain--bandwidth wall
+$g_m/(2\pi C_L)$ (Section~\ref{sec:sweeps}), and the analysis there is explicit that the
+\emph{only} lever on that wall is more $g_m$ per mW: at fixed gain and swing the bandwidth
+scales linearly with power at a slope set by the $g_m/I_D$ efficiency
+(Eq.~\eqref{eq:frontier}), and no load re-tuning escapes the $474MHz$ ideal product
+(Eq.~\eqref{eq:gbw}, Table~\ref{tab:rdbracket}). Cascoding to raise $r_o$ would only slide
+the design along that hyperbola --- more gain for less bandwidth --- and still miss both
+targets at the baseline $g_m$, so it is not a way around the wall. What a cascode
+\emph{can} do, applied to the \emph{input pair} rather than the load, is reduce the Miller
+multiplication of $C_{gd}$ that forms the second-order gate pole --- the pole
+Section~\ref{sec:rdbracket} found pulls the realised GBW $\sim1.5\%$ below the $474MHz$
+ideal. An input-pair cascode could recover part of that $1.5\%$, nudging the realised
+product toward the single-pole ideal rather than beating it, at the cost of the extra
+stacked $V_{DS,sat}$ the $1.2V$ rail and $400mV_{pp}$ swing make scarce. (ii)
+\emph{Active-inductor peaking} at the output pole would extend $f_{-3dB}$ at fixed $R_D$
+and current; a passive spiral of the required value is far too large for the TinyTapeout
+tile, so only an active inductor (a gyrator-C load) is practical, buying bandwidth margin
+at the price of its own headroom and noise. (iii) The supply-rejection path is the weakest
+small-signal link ($A_{sc}=-7.8dB$, Section~\ref{sec:quality}, set by $V_{DD}$ coupling
+through $R_D$ onto the drains); a \emph{replica-biased or regulated drain load} would
+attenuate that path and tighten the present $\text{PSRR}\approx53dB$ (median of the
+$24$-draw native-mismatch set). (iv) The simple tail mirror is compliance-limited
+(Section~\ref{sec:tailbias}); a \emph{low-voltage cascode or constant-$g_m$ tail} would
+raise the tail output resistance --- improving on the present $\text{CMRR}\approx67dB$
+($24$-draw median) --- and cut the supply/temperature sensitivity of $I_{tail}$, if the
+$200mV$ budget can be relaxed or a cascode fitted within it. (v) If offset ever becomes a
+spec, \emph{chopping or auto-zeroing} (or simply more pair area) would push below the
+present $\sigma(V_{os})\approx2.8mV$ ($40$-draw native-mismatch MC). None of these beats
+the gain--bandwidth wall --- Section~\ref{sec:sweeps} shows only more $g_m$ per mW does
+that; they refine the realised design toward its ideal limit (input cascode), extend
+bandwidth (active inductor), or harden the rejection and offset the quality section
+measures.
 
 \bibliographystyle{IEEEtran}
 \bibliography{Sources}
