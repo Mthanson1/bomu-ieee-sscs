@@ -156,4 +156,10 @@ if grid is not None:
                loc="center right", fontsize=9)
     save(fig, "bomu_gain_bw_tradeoff.png")
 
+# gain-vs-power and area-vs-power design-space maps. Each is its own runnable
+# script; run here so they regenerate with the rest of the figures.
+import runpy
+runpy.run_path(os.path.join(HERE, "plot_gain_space.py"), run_name="__main__")
+runpy.run_path(os.path.join(HERE, "plot_area_power.py"), run_name="__main__")
+
 print("done")
